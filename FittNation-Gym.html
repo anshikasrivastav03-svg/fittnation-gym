@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>FittNation Gym — Smart Fitness Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+/* ============ TOKENS ============ */
+:root{
+  --bg:#0a0d14;
+  --bg-soft:#0f1320;
+  --panel: rgba(255,255,255,0.045);
+  --panel-border: rgba(255,255,255,0.09);
+  --panel-strong: rgba(255,255,255,0.07);
+  --text:#eef0f6;
+  --text-dim:#9aa1b4;
+  --text-faint:#666e85;
+  --violet:#8b5cf6;
+  --cyan:#22d3ee;
+  --pink:#f472b6;
+  --lime:#a3e635;
+  --amber:#fbbf24;
+  --red:#fb7185;
+  --grad-1: linear-gradient(135deg,#8b5cf6,#22d3ee);
+  --grad-2: linear-gradient(135deg,#f472b6,#8b5cf6);
+  --grad-3: linear-gradient(135deg,#a3e635,#22d3ee);
+  --radius: 18px;
+  --radius-sm: 12px;
+  --shadow-glow: 0 0 0 1px rgba(255,255,255,0.04), 0 20px 60px -20px rgba(139,92,246,0.35);
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+}
+body.light{
+  --bg:#f3f4fb;
+  --bg-soft:#ffffff;
+  --panel: rgba(20,20,40,0.04);
+  --panel-border: rgba(20,20,40,0.08);
+  --panel-strong: rgba(20,20,40,0.06);
+  --text:#15172a;
+  --text-dim:#5b6079;
+  --text-faint:#9398ab;
+  --shadow-glow: 0 0 0 1px rgba(20,20,40,0.04), 0 20px 60px -25px rgba(139,92,246,0.25);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  background:
+    radial-gradient(900px 500px at 90% -10%, rgba(139,92,246,0.18), transparent 60%),
+    radial-gradient(700px 500px at 0% 10%, rgba(34,211,238,0.10), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:var(--font-body);
+  min-height:100vh;
+  transition:background .3s ease, color .3s ease;
+  overflow-x:hidden;
+}
+a{color:inherit; text-decoration:none;}
+button{font-family:inherit; cursor:pointer;}
+input,select{font-family:inherit;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--panel-border); border-radius:10px;}
+.hidden{display:none !important;}
+
+/* ============ AUTH SCREEN ============ */
+#authScreen{
+  min-height:100vh; display:flex; align-items:center; justify-content:center;
+  padding:24px;
+}
+.auth-wrap{
+  width:100%; max-width:960px; display:grid; grid-template-columns:1.1fr 1fr;
+  border-radius:24px; overflow:hidden; box-shadow:var(--shadow-glow);
+  background:var(--panel-strong); border:1px solid var(--panel-border);
+  backdrop-filter:blur(20px);
+}
+.auth-hero{
+  padding:48px 40px; background:var(--grad-1); position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.auth-hero::after{
+  content:""; position:absolute; inset:0;
+  background:radial-gradient(circle at 80% 110%, rgba(255,255,255,0.35), transparent 55%);
+  mix-blend-mode:overlay;
+}
+.auth-hero h1{
+  font-family:var(--font-display); font-size:2.1rem; color:#fff; line-height:1.15; position:relative;
+}
+.auth-hero p{color:rgba(255,255,255,0.85); margin-top:14px; font-size:.95rem; position:relative; max-width:320px;}
+.auth-hero .ring-deco{position:relative; margin-top:30px; display:flex; gap:10px; flex-wrap:wrap;}
+.auth-hero .chip{
+  background:rgba(255,255,255,0.18); color:#fff; font-size:.72rem; padding:6px 12px;
+  border-radius:100px; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.3);
+}
+.auth-form{padding:44px 40px; display:flex; flex-direction:column; gap:16px;}
+.auth-form .logo{font-family:var(--font-display); font-weight:700; font-size:1.3rem; display:flex; align-items:center; gap:8px;}
+.auth-form .logo span{
+  width:34px;height:34px;border-radius:10px;background:var(--grad-1);
+  display:flex;align-items:center;justify-content:center;font-size:1.1rem;
+}
+.tab-switch{display:flex; gap:6px; background:var(--panel); padding:4px; border-radius:100px; border:1px solid var(--panel-border); margin-top:8px;}
+.tab-switch button{flex:1; padding:9px; border:none; background:transparent; border-radius:100px; color:var(--text-dim); font-weight:600; font-size:.85rem; transition:.2s;}
+.tab-switch button.active{background:var(--grad-1); color:#fff;}
+.field{display:flex; flex-direction:column; gap:6px;}
+.field label{font-size:.75rem; color:var(--text-dim); font-weight:600; letter-spacing:.02em;}
+.field input, .field select{
+  background:var(--panel); border:1px solid var(--panel-border); color:var(--text);
+  padding:11px 13px; border-radius:11px; font-size:.9rem; outline:none; transition:.2s;
+}
+.field input:focus, .field select:focus{border-color:var(--violet); box-shadow:0 0 0 3px rgba(139,92,246,0.18);}
+.row2{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.btn-primary{
+  background:var(--grad-1); border:none; color:#fff; padding:13px; border-radius:12px;
+  font-weight:700; font-size:.92rem; margin-top:6px; box-shadow:0 10px 25px -10px rgba(139,92,246,0.6);
+  transition:transform .15s ease;
+}
+.btn-primary:hover{transform:translateY(-1px);}
+.auth-hint{font-size:.74rem; color:var(--text-faint); text-align:center; line-height:1.5;}
+.auth-error{color:var(--red); font-size:.8rem; min-height:1em;}
+
+/* ============ APP SHELL ============ */
+#app{display:none;}
+#app.show{display:flex; min-height:100vh;}
+
+/* Sidebar */
+.sidebar{
+  width:240px; flex-shrink:0; background:var(--bg-soft); border-right:1px solid var(--panel-border);
+  padding:22px 16px; display:flex; flex-direction:column; gap:6px; position:sticky; top:0; height:100vh; overflow-y:auto;
+  z-index:40;
+}
+.sidebar .brand{display:flex; align-items:center; gap:10px; padding:0 8px 18px 8px; font-family:var(--font-display); font-weight:700; font-size:1.05rem;}
+.sidebar .brand span{width:36px;height:36px;border-radius:10px;background:var(--grad-1); display:flex;align-items:center;justify-content:center; font-size:1.2rem;}
+.nav-item{
+  display:flex; align-items:center; gap:12px; padding:11px 12px; border-radius:12px; color:var(--text-dim);
+  font-size:.86rem; font-weight:600; border:none; background:transparent; width:100%; text-align:left; transition:.15s;
+}
+.nav-item .ic{font-size:1.05rem; width:20px; text-align:center;}
+.nav-item:hover{background:var(--panel); color:var(--text);}
+.nav-item.active{background:var(--grad-1); color:#fff; box-shadow:0 8px 20px -8px rgba(139,92,246,.6);}
+.nav-section-label{font-size:.65rem; text-transform:uppercase; letter-spacing:.1em; color:var(--text-faint); padding:14px 12px 4px;}
+.sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid var(--panel-border);}
+.user-mini{display:flex; align-items:center; gap:10px; padding:8px;}
+.avatar{width:36px;height:36px;border-radius:50%; background:var(--grad-2); display:flex;align-items:center;justify-content:center; color:#fff; font-weight:700; font-size:.85rem; flex-shrink:0;}
+.user-mini .meta{overflow:hidden;}
+.user-mini .meta .nm{font-size:.82rem; font-weight:700; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;}
+.user-mini .meta .rl{font-size:.68rem; color:var(--text-faint); text-transform:capitalize;}
+.logout-btn{width:100%; margin-top:8px; padding:9px; border-radius:10px; border:1px solid var(--panel-border); background:var(--panel); color:var(--text-dim); font-size:.78rem; font-weight:600;}
+.logout-btn:hover{color:var(--red); border-color:rgba(251,113,133,0.4);}
+
+/* Main */
+.main{flex:1; min-width:0;}
+.topbar{
+  position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between;
+  padding:16px 28px; background:rgba(10,13,20,0.65); backdrop-filter:blur(16px); border-bottom:1px solid var(--panel-border);
+}
+body.light .topbar{background:rgba(243,244,251,0.75);}
+.topbar h2{font-family:var(--font-display); font-size:1.25rem;}
+.topbar .sub{font-size:.78rem; color:var(--text-faint); margin-top:2px;}
+.top-actions{display:flex; align-items:center; gap:10px;}
+.icon-btn{
+  width:40px;height:40px;border-radius:12px; background:var(--panel); border:1px solid var(--panel-border);
+  display:flex; align-items:center; justify-content:center; font-size:1.05rem; color:var(--text); position:relative; flex-shrink:0;
+}
+.icon-btn:hover{background:var(--panel-strong);}
+.badge-dot{position:absolute; top:6px; right:7px; width:8px;height:8px;border-radius:50%; background:var(--pink); box-shadow:0 0 0 2px var(--bg-soft);}
+.hamburger{display:none;}
+.notif-panel{
+  position:absolute; top:54px; right:28px; width:320px; max-height:380px; overflow-y:auto;
+  background:var(--bg-soft); border:1px solid var(--panel-border); border-radius:16px; box-shadow:var(--shadow-glow);
+  padding:10px; z-index:60;
+}
+.notif-item{padding:11px 12px; border-radius:10px; font-size:.8rem; color:var(--text-dim); display:flex; gap:10px; align-items:flex-start;}
+.notif-item:hover{background:var(--panel);}
+.notif-item b{color:var(--text); display:block; font-size:.8rem; margin-bottom:2px;}
+
+.content{padding:26px 28px 60px;}
+.page{display:none; animation:fadeIn .35s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
+
+.section-head{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px;}
+.section-head h3{font-family:var(--font-display); font-size:1.05rem;}
+.section-head .desc{font-size:.78rem; color:var(--text-faint); margin-top:2px;}
+
+.grid{display:grid; gap:18px;}
+.grid-4{grid-template-columns:repeat(4,1fr);}
+.grid-3{grid-template-columns:repeat(3,1fr);}
+.grid-2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:1100px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-3{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:640px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr;}}
+
+.card{
+  background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius);
+  padding:20px; backdrop-filter:blur(14px); position:relative; overflow:hidden;
+}
+.card.glow::before{
+  content:""; position:absolute; top:-40%; right:-30%; width:180px; height:180px; border-radius:50%;
+  background:var(--grad-1); filter:blur(60px); opacity:.35; pointer-events:none;
+}
+.card h4{font-size:.85rem; color:var(--text-dim); font-weight:600; display:flex; align-items:center; gap:8px;}
+.stat-num{font-family:var(--font-mono); font-size:1.9rem; font-weight:700; margin-top:8px;}
+.stat-sub{font-size:.74rem; color:var(--text-faint); margin-top:4px;}
+.trend{font-size:.72rem; font-weight:700; padding:2px 8px; border-radius:100px; display:inline-block; margin-top:8px;}
+.trend.up{color:var(--lime); background:rgba(163,230,53,0.12);}
+.trend.down{color:var(--red); background:rgba(251,113,133,0.12);}
+
+/* progress rings */
+.ring-wrap{display:flex; align-items:center; gap:16px;}
+.ring-wrap svg{transform:rotate(-90deg); flex-shrink:0;}
+.ring-bg{fill:none; stroke:var(--panel-border); stroke-width:9;}
+.ring-fg{fill:none; stroke-width:9; stroke-linecap:round; transition:stroke-dashoffset .6s ease;}
+.ring-label .big{font-family:var(--font-mono); font-size:1.4rem; font-weight:700;}
+.ring-label .small{font-size:.72rem; color:var(--text-faint);}
+
+/* buttons */
+.btn{padding:10px 16px; border-radius:11px; border:1px solid var(--panel-border); background:var(--panel); color:var(--text); font-weight:600; font-size:.82rem; transition:.15s;}
+.btn:hover{background:var(--panel-strong);}
+.btn-grad{background:var(--grad-1); color:#fff; border:none; box-shadow:0 8px 20px -10px rgba(139,92,246,.6);}
+.btn-grad:hover{transform:translateY(-1px);}
+.btn-grad.pink{background:var(--grad-2);}
+.btn-grad.lime{background:var(--grad-3); color:#08240a;}
+.btn-sm{padding:7px 12px; font-size:.74rem; border-radius:9px;}
+.btn-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;}
+
+/* day pills */
+.day-pills{display:flex; gap:8px; flex-wrap:wrap; margin:14px 0;}
+.day-pill{padding:8px 14px; border-radius:100px; background:var(--panel); border:1px solid var(--panel-border); font-size:.76rem; font-weight:700; color:var(--text-faint);}
+.day-pill.today{background:var(--grad-1); color:#fff; border:none;}
+
+/* exercise list */
+.ex-item{display:flex; gap:14px; align-items:center; padding:13px; border-radius:14px; background:var(--panel); border:1px solid var(--panel-border); margin-bottom:10px;}
+.ex-ic{width:52px;height:52px; border-radius:13px; background:var(--grad-1); display:flex; align-items:center; justify-content:center; font-size:1.5rem; flex-shrink:0; animation:pulseIc 2.4s ease-in-out infinite;}
+@keyframes pulseIc{0%,100%{transform:scale(1);} 50%{transform:scale(1.08);}}
+.ex-meta b{font-size:.88rem;}
+.ex-meta .tag{font-size:.72rem; color:var(--text-faint); margin-top:2px;}
+.ex-done{margin-left:auto;}
+.check{width:26px;height:26px;border-radius:50%; border:2px solid var(--panel-border); display:flex; align-items:center; justify-content:center; font-size:.8rem; color:transparent; flex-shrink:0;}
+.check.on{background:var(--grad-3); border:none; color:#08240a;}
+
+/* diet list */
+.diet-item{display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border-radius:13px; background:var(--panel); border:1px solid var(--panel-border); margin-bottom:9px;}
+.diet-item .meal{font-size:.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--cyan);}
+.diet-item .desc{font-size:.84rem; margin-top:3px;}
+.diet-item .kcal{font-family:var(--font-mono); font-size:.78rem; color:var(--text-faint); white-space:nowrap;}
+
+/* calendar */
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:14px;}
+.cal-day{aspect-ratio:1; border-radius:9px; background:var(--panel); border:1px solid var(--panel-border); display:flex; align-items:center; justify-content:center; font-size:.74rem; color:var(--text-faint); position:relative;}
+.cal-day.present{background:var(--grad-3); color:#08240a; font-weight:700; border:none;}
+.cal-day.future{opacity:.35;}
+.cal-day.today-mark{box-shadow:0 0 0 2px var(--violet) inset;}
+.cal-dow{font-size:.65rem; text-align:center; color:var(--text-faint); font-weight:700;}
+
+/* water glasses */
+.water-row{display:flex; gap:10px; flex-wrap:wrap; margin-top:16px;}
+.glass{width:42px;height:54px; border-radius:6px 6px 12px 12px; border:2px solid var(--cyan); position:relative; overflow:hidden; background:transparent;}
+.glass .fill{position:absolute; bottom:0; left:0; right:0; height:0%; background:linear-gradient(180deg,#22d3ee,#0891b2); transition:height .4s ease;}
+.glass.filled .fill{height:100%;}
+
+/* table */
+table{width:100%; border-collapse:collapse; font-size:.82rem;}
+th{text-align:left; color:var(--text-faint); font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; padding:10px 12px; border-bottom:1px solid var(--panel-border);}
+td{padding:11px 12px; border-bottom:1px solid var(--panel-border);}
+tr:last-child td{border-bottom:none;}
+.role-tag{font-size:.68rem; font-weight:700; padding:3px 9px; border-radius:100px; text-transform:capitalize;}
+.role-tag.member{background:rgba(34,211,238,0.14); color:var(--cyan);}
+.role-tag.trainer{background:rgba(244,114,182,0.14); color:var(--pink);}
+.role-tag.admin{background:rgba(251,191,36,0.14); color:var(--amber);}
+
+.toast-host{position:fixed; bottom:24px; right:24px; z-index:200; display:flex; flex-direction:column; gap:10px;}
+.toast{background:var(--bg-soft); border:1px solid var(--panel-border); padding:13px 18px; border-radius:13px; font-size:.84rem; box-shadow:var(--shadow-glow); animation:slideIn .3s ease; max-width:300px;}
+@keyframes slideIn{from{opacity:0; transform:translateX(30px);} to{opacity:1; transform:translateX(0);}}
+
+.chart-box{height:230px; margin-top:10px;}
+.chart-box.tall{height:280px;}
+
+.bmi-scale{display:flex; height:10px; border-radius:100px; overflow:hidden; margin:18px 0 8px;}
+.bmi-scale div{flex:1;}
+.bmi-marker{position:relative; height:0;}
+.bmi-marker .ptr{position:absolute; top:-22px; transform:translateX(-50%); font-size:.7rem; font-weight:700; transition:left .4s ease;}
+
+select.input-mini, input.input-mini{background:var(--panel); border:1px solid var(--panel-border); color:var(--text); padding:9px 11px; border-radius:10px; font-size:.84rem;}
+
+footer.app-foot{text-align:center; padding:24px; font-size:.72rem; color:var(--text-faint);}
+
+/* Mobile bottom nav */
+.bottom-nav{display:none;}
+@media(max-width:880px){
+  .sidebar{position:fixed; left:0; top:0; transform:translateX(-100%); transition:transform .25s ease; box-shadow:0 0 60px rgba(0,0,0,0.4);}
+  .sidebar.open{transform:translateX(0);}
+  .hamburger{display:flex;}
+  .content{padding:18px 16px 90px;}
+  .topbar{padding:14px 16px;}
+  .bottom-nav{
+    display:flex; position:fixed; bottom:0; left:0; right:0; height:64px; background:var(--bg-soft);
+    border-top:1px solid var(--panel-border); z-index:50; justify-content:space-around; align-items:center;
+  }
+  .bottom-nav button{background:none; border:none; color:var(--text-faint); display:flex; flex-direction:column; align-items:center; gap:3px; font-size:.6rem; font-weight:700;}
+  .bottom-nav button.active{color:var(--cyan);}
+  .bottom-nav .ic{font-size:1.15rem;}
+  .auth-wrap{grid-template-columns:1fr;}
+  .auth-hero{display:none;}
+  .notif-panel{right:12px; width:90vw;}
+}
+.overlay{display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:35;}
+.overlay.show{display:block;}
+</style>
+</head>
+<body>
+
+<!-- ============ AUTH SCREEN ============ -->
+<div id="authScreen">
+  <div class="auth-wrap">
+    <div class="auth-hero">
+      <div>
+        <div style="font-family:var(--font-display); color:#fff; font-weight:700; display:flex; align-items:center; gap:8px; font-size:1.05rem;">
+          <span style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.25); display:flex;align-items:center;justify-content:center;">🏋️</span>
+          FittNation Gym
+        </div>
+        <h1 style="margin-top:26px;">Train smart. Track everything. Show up daily.</h1>
+        <p>Attendance, steps, water, diet and workouts — a new plan every single day, automatically.</p>
+      </div>
+      <div class="ring-deco">
+        <span class="chip">👣 Auto Step Tracking</span>
+        <span class="chip">🥗 Daily Diet AI</span>
+        <span class="chip">📅 Attendance Streaks</span>
+        <span class="chip">📈 Live Progress</span>
+      </div>
+    </div>
+    <div class="auth-form">
+      <div class="logo"><span>🏋️</span>FittNation</div>
+      <div class="tab-switch">
+        <button id="tabLoginBtn" class="active" onclick="switchAuthTab('login')">Log In</button>
+        <button id="tabRegBtn" onclick="switchAuthTab('register')">Register</button>
+      </div>
+
+      <form id="loginForm" onsubmit="return handleLogin(event)" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="field"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com" required></div>
+        <div class="field"><label>Password</label><input type="password" id="loginPassword" placeholder="••••••••" required></div>
+        <div class="auth-error" id="loginError"></div>
+        <button class="btn-primary" type="submit">Log In</button>
+        <div class="auth-hint">Demo accounts — Admin: admin@fittnation.com / admin123 &nbsp;•&nbsp; Trainer: trainer@fittnation.com / trainer123</div>
+      </form>
+
+      <form id="registerForm" class="hidden" onsubmit="return handleRegister(event)" style="display:flex; flex-direction:column; gap:14px;">
+        <div class="field"><label>Full Name</label><input type="text" id="regName" placeholder="Alex Carter" required></div>
+        <div class="field"><label>Email</label><input type="email" id="regEmail" placeholder="you@example.com" required></div>
+        <div class="field"><label>Password</label><input type="password" id="regPassword" placeholder="Min 4 characters" required></div>
+        <div class="row2">
+          <div class="field"><label>Height (cm)</label><input type="number" id="regHeight" placeholder="172" required></div>
+          <div class="field"><label>Weight (kg)</label><input type="number" id="regWeight" placeholder="68" required></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Age</label><input type="number" id="regAge" placeholder="24" required></div>
+          <div class="field"><label>Gender</label>
+            <select id="regGender"><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select>
+          </div>
+        </div>
+        <div class="auth-error" id="regError"></div>
+        <button class="btn-primary" type="submit">Create Account</button>
+        <div class="auth-hint">By registering you join FittNation as a member. Trainers/Admins are set up by the gym.</div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app">
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span>🏋️</span>FittNation</div>
+
+    <div class="nav-section-label">Main</div>
+    <button class="nav-item active" data-page="home" onclick="goPage('home')"><span class="ic">🏠</span>Dashboard Home</button>
+    <button class="nav-item" data-page="attendance" onclick="goPage('attendance')"><span class="ic">📅</span>Attendance</button>
+    <button class="nav-item" data-page="workout" onclick="goPage('workout')"><span class="ic">🏋️</span>Today's Workout</button>
+    <button class="nav-item" data-page="diet" onclick="goPage('diet')"><span class="ic">🥗</span>Diet Plan</button>
+
+    <div class="nav-section-label">Track</div>
+    <button class="nav-item" data-page="steps" onclick="goPage('steps')"><span class="ic">👣</span>Step Tracker</button>
+    <button class="nav-item" data-page="water" onclick="goPage('water')"><span class="ic">💧</span>Water Intake</button>
+    <button class="nav-item" data-page="bmi" onclick="goPage('bmi')"><span class="ic">📊</span>BMI Calculator</button>
+    <button class="nav-item" data-page="calories" onclick="goPage('calories')"><span class="ic">🔥</span>Calories</button>
+    <button class="nav-item" data-page="progress" onclick="goPage('progress')"><span class="ic">📈</span>Progress Charts</button>
+
+    <div class="nav-section-label" id="staffLabel" style="display:none;">Staff</div>
+    <button class="nav-item" id="trainerNav" data-page="trainer" onclick="goPage('trainer')" style="display:none;"><span class="ic">💪</span>Trainer Panel</button>
+    <button class="nav-item" id="adminNav" data-page="admin" onclick="goPage('admin')" style="display:none;"><span class="ic">⚙️</span>Admin Dashboard</button>
+
+    <div class="sidebar-foot">
+      <div class="user-mini">
+        <div class="avatar" id="sideAvatar">A</div>
+        <div class="meta"><div class="nm" id="sideName">—</div><div class="rl" id="sideRole">member</div></div>
+      </div>
+      <button class="logout-btn" onclick="logout()">🚪 Log Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <button class="icon-btn hamburger" onclick="openSidebar()">☰</button>
+        <div>
+          <h2 id="pageTitle">Dashboard Home</h2>
+          <div class="sub" id="pageSub">Welcome back — here's today at a glance.</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" onclick="toggleNotif()">🔔<span class="badge-dot" id="notifDot"></span></button>
+        <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+      </div>
+      <div class="notif-panel hidden" id="notifPanel"></div>
+    </div>
+
+    <div class="content" id="content">
+
+      <!-- ===== HOME ===== -->
+      <section class="page active" id="page-home">
+        <div class="grid grid-4" id="homeStats"></div>
+
+        <div class="grid grid-2" style="margin-top:18px;">
+          <div class="card glow">
+            <h4>📅 This week's attendance</h4>
+            <div class="chart-box"><canvas id="homeAttChart"></canvas></div>
+          </div>
+          <div class="card glow">
+            <h4>👣 Steps — last 7 days</h4>
+            <div class="chart-box"><canvas id="homeStepsChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="section-head" style="margin-top:26px;">
+          <div><h3>🏋️ Today's Plan Preview</h3><div class="desc">Auto-rotates daily — full plan in Today's Workout & Diet Plan</div></div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h4 id="homeWorkoutTitle">Workout</h4>
+            <div id="homeWorkoutPreview"></div>
+          </div>
+          <div class="card">
+            <h4 id="homeDietTitle">Diet</h4>
+            <div id="homeDietPreview"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ATTENDANCE ===== -->
+      <section class="page" id="page-attendance">
+        <div class="section-head">
+          <div><h3>📅 Attendance</h3><div class="desc">Mark today, build your streak.</div></div>
+          <button class="btn btn-grad" id="markAttBtn" onclick="markAttendance()">✅ Mark Today Present</button>
+        </div>
+        <div class="grid grid-3">
+          <div class="card"><h4>🔥 Current Streak</h4><div class="stat-num" id="streakNum">0</div><div class="stat-sub">consecutive days</div></div>
+          <div class="card"><h4>📈 This Month</h4><div class="stat-num" id="monthAttNum">0%</div><div class="stat-sub">attendance rate</div></div>
+          <div class="card"><h4>🏆 Total Visits</h4><div class="stat-num" id="totalVisits">0</div><div class="stat-sub">all-time check-ins</div></div>
+        </div>
+        <div class="card" style="margin-top:18px;">
+          <h4>Calendar — <span id="calMonthLabel"></span></h4>
+          <div class="cal-grid" id="calDow"></div>
+          <div class="cal-grid" id="calGrid"></div>
+        </div>
+      </section>
+
+      <!-- ===== WORKOUT ===== -->
+      <section class="page" id="page-workout">
+        <div class="section-head">
+          <div><h3>🏋️ Today's Workout — <span id="workoutDayName"></span></h3><div class="desc">A fresh routine every day of the week.</div></div>
+        </div>
+        <div class="day-pills" id="weekPillsWorkout"></div>
+        <div id="workoutList"></div>
+      </section>
+
+      <!-- ===== DIET ===== -->
+      <section class="page" id="page-diet">
+        <div class="section-head">
+          <div><h3>🥗 Daily Diet Plan — <span id="dietDayName"></span></h3><div class="desc">Balanced nutrition that changes daily.</div></div>
+        </div>
+        <div class="day-pills" id="weekPillsDiet"></div>
+        <div class="grid grid-2">
+          <div class="card">
+            <h4>Today's Meals</h4>
+            <div id="dietList" style="margin-top:10px;"></div>
+          </div>
+          <div class="card glow">
+            <h4>Daily Totals</h4>
+            <div class="ring-wrap" style="margin-top:14px;">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle class="ring-bg" cx="60" cy="60" r="50"/>
+                <circle class="ring-fg" id="dietRing" cx="60" cy="60" r="50" stroke="url(#g1)"/>
+                <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a3e635"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
+              </svg>
+              <div class="ring-label"><div class="big" id="dietKcalTotal">0</div><div class="small">kcal target ~<span id="dietKcalGoal">2000</span></div></div>
+            </div>
+            <div class="stat-sub" style="margin-top:14px;">Protein-forward, whole-food meals rotate daily to keep nutrition varied and sustainable.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== STEPS ===== -->
+      <section class="page" id="page-steps">
+        <div class="section-head">
+          <div><h3>👣 Automatic Step Tracker</h3><div class="desc">Uses your phone's motion sensor — tap start and walk.</div></div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card glow">
+            <div class="ring-wrap">
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle class="ring-bg" cx="75" cy="75" r="64"/>
+                <circle class="ring-fg" id="stepsRing" cx="75" cy="75" r="64" stroke="url(#g2)"/>
+                <defs><linearGradient id="g2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#22d3ee"/></linearGradient></defs>
+              </svg>
+              <div class="ring-label"><div class="big" id="stepsToday">0</div><div class="small">of <span id="stepsGoalLabel">8000</span> steps</div></div>
+            </div>
+            <div class="btn-row">
+              <button class="btn btn-grad" id="stepStartBtn" onclick="toggleStepTracking()">▶️ Start Auto Tracking</button>
+              <button class="btn" onclick="simulateWalk()">🚶 Simulate Walk (+150)</button>
+            </div>
+            <div class="stat-sub" id="stepStatus" style="margin-top:10px;">Tracking is off. Best results on a mobile browser with motion sensors enabled.</div>
+          </div>
+          <div class="card">
+            <h4>👣 Steps — last 7 days</h4>
+            <div class="chart-box"><canvas id="stepsWeekChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== WATER ===== -->
+      <section class="page" id="page-water">
+        <div class="section-head">
+          <div><h3>💧 Water Intake Tracker</h3><div class="desc">Tap a glass each time you drink. Goal: <span id="waterGoalLabel">8</span> glasses/day.</div></div>
+        </div>
+        <div class="grid grid-2">
+          <div class="card glow">
+            <h4>Today's Intake — <span id="waterCount">0</span>/<span id="waterGoalLabel2">8</span> glasses</h4>
+            <div class="water-row" id="waterGlasses"></div>
+            <div class="btn-row">
+              <button class="btn btn-grad" onclick="addWater()">+ Add Glass (250ml)</button>
+              <button class="btn" onclick="resetWater()">Reset Today</button>
+            </div>
+          </div>
+          <div class="card">
+            <h4>💧 Water — last 7 days</h4>
+            <div class="chart-box"><canvas id="waterWeekChart"></canvas></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== BMI ===== -->
+      <section class="page" id="page-bmi">
+        <div class="section-head"><div><h3>📊 BMI Calculator</h3><div class="desc">Body Mass Index based on your height & weight.</div></div></div>
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="row2">
+              <div class="field"><label>Height (cm)</label><input type="number" id="bmiHeight" class="input-mini"></div>
+              <div class="field"><label>Weight (kg)</label><input type="number" id="bmiWeight" class="input-mini"></div>
+            </div>
+            <button class="btn btn-grad" style="margin-top:14px;" onclick="calcBMI()">Calculate BMI</button>
+            <div style="margin-top:20px;">
+              <div class="stat-num" id="bmiResult">—</div>
+              <div class="stat-sub" id="bmiCategory">Enter your details</div>
+              <div class="bmi-scale">
+                <div style="background:#22d3ee;"></div><div style="background:#a3e635;"></div><div style="background:#fbbf24;"></div><div style="background:#fb7185;"></div>
+              </div>
+              <div class="bmi-marker"><div class="ptr" id="bmiPtr" style="left:0%;">▲</div></div>
+              <div style="display:flex; justify-content:space-between; font-size:.68rem; color:var(--text-faint); margin-top:4px;">
+                <span>Under 18.5</span><span>18.5–25</span><span>25–30</span><span>30+</span>
+              </div>
+            </div>
+          </div>
+          <div class="card glow">
+            <h4>What your BMI means</h4>
+            <div id="bmiInfo" style="margin-top:12px; font-size:.85rem; color:var(--text-dim); line-height:1.7;">
+              BMI is a quick screening tool, not a full diagnosis — it doesn't account for muscle mass, bone density, or body composition. Use it alongside other measures and your trainer's guidance.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== CALORIES ===== -->
+      <section class="page" id="page-calories">
+        <div class="section-head"><div><h3>🔥 Calories Calculator</h3><div class="desc">Estimate your daily energy needs (Mifflin-St Jeor).</div></div></div>
+        <div class="grid grid-2">
+          <div class="card">
+            <div class="row2">
+              <div class="field"><label>Age</label><input type="number" id="calAge" class="input-mini"></div>
+              <div class="field"><label>Gender</label><select id="calGender" class="input-mini"><option value="male">Male</option><option value="female">Female</option></select></div>
+            </div>
+            <div class="row2" style="margin-top:12px;">
+              <div class="field"><label>Height (cm)</label><input type="number" id="calHeight" class="input-mini"></div>
+              <div class="field"><label>Weight (kg)</label><input type="number" id="calWeight" class="input-mini"></div>
+            </div>
+            <div class="field" style="margin-top:12px;"><label>Activity Level</label>
+              <select id="calActivity" class="input-mini">
+                <option value="1.2">Sedentary (little/no exercise)</option>
+                <option value="1.375">Light (1-3 days/week)</option>
+                <option value="1.55" selected>Moderate (3-5 days/week)</option>
+                <option value="1.725">Active (6-7 days/week)</option>
+                <option value="1.9">Very Active (athlete)</option>
+              </select>
+            </div>
+            <button class="btn btn-grad" style="margin-top:14px;" onclick="calcCalories()">Calculate</button>
+          </div>
+          <div class="grid" style="grid-template-columns:1fr; gap:18px;">
+            <div class="card glow"><h4>BMR (Resting)</h4><div class="stat-num" id="bmrResult">—</div><div class="stat-sub">calories burned at rest</div></div>
+            <div class="card glow"><h4>TDEE (Maintenance)</h4><div class="stat-num" id="tdeeResult">—</div><div class="stat-sub">calories/day to maintain weight</div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== PROGRESS ===== -->
+      <section class="page" id="page-progress">
+        <div class="section-head"><div><h3>📈 Progress Charts</h3><div class="desc">Your trends over time.</div></div></div>
+        <div class="grid grid-2">
+          <div class="card"><h4>⚖️ Weight Progress</h4><div class="chart-box tall"><canvas id="weightChart"></canvas></div>
+            <div class="btn-row"><input type="number" id="newWeightInput" class="input-mini" placeholder="Log today's weight (kg)" style="flex:1;"><button class="btn btn-grad" onclick="logWeight()">Log</button></div>
+          </div>
+          <div class="card"><h4>📅 Attendance — last 30 days</h4><div class="chart-box tall"><canvas id="attTrendChart"></canvas></div></div>
+          <div class="card"><h4>👣 Steps — last 14 days</h4><div class="chart-box tall"><canvas id="stepsTrendChart"></canvas></div></div>
+          <div class="card"><h4>💧 Water — last 14 days</h4><div class="chart-box tall"><canvas id="waterTrendChart"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- ===== TRAINER ===== -->
+      <section class="page" id="page-trainer">
+        <div class="section-head"><div><h3>💪 Trainer Panel</h3><div class="desc">Manage member attendance and check daily activity.</div></div></div>
+        <div class="grid grid-3">
+          <div class="card"><h4>Members</h4><div class="stat-num" id="trMemberCount">0</div></div>
+          <div class="card"><h4>Present Today</h4><div class="stat-num" id="trPresentToday">0</div></div>
+          <div class="card"><h4>Avg Steps Today</h4><div class="stat-num" id="trAvgSteps">0</div></div>
+        </div>
+        <div class="card" style="margin-top:18px; overflow-x:auto;">
+          <h4>Member Roster</h4>
+          <table style="margin-top:10px;"><thead><tr><th>Name</th><th>Email</th><th>Steps Today</th><th>Water</th><th>Attendance</th><th>Action</th></tr></thead>
+          <tbody id="trainerTable"></tbody></table>
+        </div>
+      </section>
+
+      <!-- ===== ADMIN ===== -->
+      <section class="page" id="page-admin">
+        <div class="section-head"><div><h3>⚙️ Admin Dashboard</h3><div class="desc">Gym-wide overview and user management.</div></div></div>
+        <div class="grid grid-4">
+          <div class="card"><h4>Total Members</h4><div class="stat-num" id="adMembers">0</div></div>
+          <div class="card"><h4>Trainers</h4><div class="stat-num" id="adTrainers">0</div></div>
+          <div class="card"><h4>Today's Check-ins</h4><div class="stat-num" id="adCheckins">0</div></div>
+          <div class="card"><h4>Avg Attendance (30d)</h4><div class="stat-num" id="adAvgAtt">0%</div></div>
+        </div>
+        <div class="grid grid-2" style="margin-top:18px;">
+          <div class="card"><h4>📊 Attendance — last 7 days (all members)</h4><div class="chart-box"><canvas id="adminAttChart"></canvas></div></div>
+          <div class="card"><h4>👥 Roles Breakdown</h4><div class="chart-box"><canvas id="adminRolesChart"></canvas></div></div>
+        </div>
+        <div class="card" style="margin-top:18px; overflow-x:auto;">
+          <h4>All Users</h4>
+          <table style="margin-top:10px;"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Action</th></tr></thead>
+          <tbody id="adminTable"></tbody></table>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="app-foot">FittNation Gym © 2026 — Train smart, every single day.</footer>
+  </main>
+
+  <nav class="bottom-nav">
+    <button data-page="home" onclick="goPage('home')" class="active"><span class="ic">🏠</span>Home</button>
+    <button data-page="attendance" onclick="goPage('attendance')"><span class="ic">📅</span>Attend</button>
+    <button data-page="steps" onclick="goPage('steps')"><span class="ic">👣</span>Steps</button>
+    <button data-page="diet" onclick="goPage('diet')"><span class="ic">🥗</span>Diet</button>
+    <button data-page="progress" onclick="goPage('progress')"><span class="ic">📈</span>Progress</button>
+  </nav>
+</div>
+
+<div class="toast-host" id="toastHost"></div>
+
+<script>
+/* ===================== FittNation Gym — App Logic ===================== */
+const DB_KEYS = { USERS:'ftn_users', SESSION:'ftn_session', ATT:'ftn_attendance', STEPS:'ftn_steps', WATER:'ftn_water', WEIGHT:'ftn_weight', THEME:'ftn_theme' };
+const STEP_GOAL = 8000, WATER_GOAL = 8;
+const DOW = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function load(key, fallback){ try{ const v = JSON.parse(localStorage.getItem(key)); return v===null||v===undefined ? fallback : v; }catch(e){ return fallback; } }
+function save(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+function todayStr(d){ d = d || new Date(); return d.toISOString().slice(0,10); }
+function dateMinus(n){ const d = new Date(); d.setDate(d.getDate()-n); return d; }
+function fmtShort(d){ return d.toLocaleDateString(undefined,{month:'short', day:'numeric'}); }
+
+/* ---------- seed data ---------- */
+function seedUsers(){
+  let users = load(DB_KEYS.USERS, null);
+  if(users) return users;
+  users = [
+    {id:'u_admin', name:'Gym Admin', email:'admin@fittnation.com', password:'admin123', role:'admin', height:175, weight:75, age:30, gender:'male', joined: todayStr()},
+    {id:'u_trainer', name:'Coach Maya', email:'trainer@fittnation.com', password:'trainer123', role:'trainer', height:165, weight:60, age:27, gender:'female', joined: todayStr()},
+    {id:'u_demo', name:'Jordan Lee', email:'demo@fittnation.com', password:'demo1234', role:'member', height:172, weight:68, age:24, gender:'male', joined: todayStr()},
+  ];
+  save(DB_KEYS.USERS, users);
+  return users;
+}
+let USERS = seedUsers();
+let SESSION = load(DB_KEYS.SESSION, null);
+let CURRENT = null;
+
+/* ---------- weekly plans (rotate by day of week) ---------- */
+const WORKOUTS = {
+  Sunday:   {focus:'Active Recovery & Mobility', items:[['🧘','Full Body Stretching','3 sets · 5 min'],['🚶','Light Walk','20 min'],['🌬️','Breathing & Mobility Drills','10 min']]},
+  Monday:   {focus:'Upper Body Strength', items:[['💪','Push-ups','4 sets x 12'],['🏋️','Dumbbell Bench Press','4 sets x 10'],['🎯','Shoulder Press','3 sets x 12'],['🔁','Bicep Curls','3 sets x 15']]},
+  Tuesday:  {focus:'Lower Body & Legs', items:[['🦵','Squats','4 sets x 15'],['🦿','Lunges','3 sets x 12 each'],['🏋️','Leg Press','3 sets x 12'],['🔥','Calf Raises','4 sets x 20']]},
+  Wednesday:{focus:'Cardio & Core', items:[['🏃','Treadmill Run','20 min'],['🔥','Burpees','4 sets x 10'],['💥','Plank','3 sets x 45 sec'],['🌀','Mountain Climbers','3 sets x 20']]},
+  Thursday: {focus:'Back & Pull Day', items:[['🏋️','Deadlifts','4 sets x 8'],['🔁','Pull-ups','3 sets x 8'],['🚣','Seated Rows','3 sets x 12'],['🎯','Lat Pulldown','3 sets x 12']]},
+  Friday:   {focus:'Full Body HIIT', items:[['⚡','Jumping Jacks','4 sets x 30 sec'],['🔥','Kettlebell Swings','4 sets x 15'],['💥','Box Jumps','3 sets x 10'],['🌀','High Knees','3 sets x 30 sec']]},
+  Saturday: {focus:'Yoga & Flexibility', items:[['🧘','Sun Salutations','5 rounds'],['🤸','Hip Openers','10 min'],['🧘‍♀️','Deep Stretch Flow','15 min']]},
+};
+const DIETS = {
+  Sunday:   {kcal:1900, meals:[['Breakfast','Vegetable oats with almonds & berries',320],['Lunch','Grilled chicken salad with olive oil',480],['Snack','Greek yogurt with honey',180],['Dinner','Steamed fish with quinoa & broccoli',520],['Hydration','3L water + herbal tea',0]]},
+  Monday:   {kcal:2100, meals:[['Breakfast','3 egg whites + 1 whole egg omelette, toast',380],['Lunch','Brown rice, lentils (dal), mixed veg',520],['Snack','Protein shake + banana',250],['Dinner','Grilled paneer/tofu with stir-fried veggies',480],['Hydration','3L water']]},
+  Tuesday:  {kcal:2050, meals:[['Breakfast','Peanut butter smoothie with oats',360],['Lunch','Quinoa bowl with chickpeas & avocado',500],['Snack','Mixed nuts & apple',220],['Dinner','Grilled chicken breast with sweet potato',520],['Hydration','3L water']]},
+  Wednesday:{kcal:1950, meals:[['Breakfast','Greek yogurt parfait with granola',310],['Lunch','Turkey/paneer wrap with veggies',460],['Snack','Boiled eggs (2) + cucumber',180],['Dinner','Light vegetable soup + grilled tofu',420],['Hydration','3L water']]},
+  Thursday: {kcal:2150, meals:[['Breakfast','Whole grain toast with avocado & egg',400],['Lunch','Salmon/fish curry with brown rice',560],['Snack','Protein bar',200],['Dinner','Stir-fried beef/soy with vegetables',540],['Hydration','3L water']]},
+  Friday:   {kcal:2000, meals:[['Breakfast','Banana protein pancakes',350],['Lunch','Chicken/chickpea Buddha bowl',500],['Snack','Trail mix',210],['Dinner','Grilled shrimp/paneer tikka with salad',480],['Hydration','3L water']]},
+  Saturday: {kcal:1850, meals:[['Breakfast','Fruit bowl with chia seeds',280],['Lunch','Veg/chicken stir fry with noodles',480],['Snack','Smoothie bowl',220],['Dinner','Light khichdi / lentil soup',420],['Hydration','3L water + green tea']]},
+};
+function todayDOW(){ return DOW[new Date().getDay()]; }
+
+/* ===================== AUTH ===================== */
+function switchAuthTab(tab){
+  document.getElementById('tabLoginBtn').classList.toggle('active', tab==='login');
+  document.getElementById('tabRegBtn').classList.toggle('active', tab==='register');
+  document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+}
+function handleLogin(e){
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPassword').value;
+  const u = USERS.find(x=>x.email.toLowerCase()===email && x.password===pass);
+  if(!u){ document.getElementById('loginError').textContent='Invalid email or password.'; return false; }
+  document.getElementById('loginError').textContent='';
+  SESSION = u.id; save(DB_KEYS.SESSION, SESSION);
+  enterApp();
+  return false;
+}
+function handleRegister(e){
+  e.preventDefault();
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass = document.getElementById('regPassword').value;
+  const height = +document.getElementById('regHeight').value;
+  const weight = +document.getElementById('regWeight').value;
+  const age = +document.getElementById('regAge').value;
+  const gender = document.getElementById('regGender').value;
+  if(pass.length<4){ document.getElementById('regError').textContent='Password must be at least 4 characters.'; return false; }
+  if(USERS.find(x=>x.email.toLowerCase()===email)){ document.getElementById('regError').textContent='An account with this email already exists.'; return false; }
+  const u = {id:'u_'+Date.now(), name, email, password:pass, role:'member', height, weight, age, gender, joined: todayStr()};
+  USERS.push(u); save(DB_KEYS.USERS, USERS);
+  document.getElementById('regError').textContent='';
+  SESSION = u.id; save(DB_KEYS.SESSION, SESSION);
+  enterApp();
+  return false;
+}
+function logout(){ SESSION=null; localStorage.removeItem(DB_KEYS.SESSION); stopStepTracking(); document.getElementById('app').classList.remove('show'); document.getElementById('authScreen').style.display='flex'; }
+
+function enterApp(){
+  CURRENT = USERS.find(u=>u.id===SESSION);
+  if(!CURRENT){ logout(); return; }
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('app').classList.add('show');
+  document.getElementById('sideAvatar').textContent = CURRENT.name.charAt(0).toUpperCase();
+  document.getElementById('sideName').textContent = CURRENT.name;
+  document.getElementById('sideRole').textContent = CURRENT.role;
+  document.getElementById('trainerNav').style.display = (CURRENT.role==='trainer'||CURRENT.role==='admin') ? 'flex':'none';
+  document.getElementById('adminNav').style.display = (CURRENT.role==='admin') ? 'flex':'none';
+  document.getElementById('staffLabel').style.display = (CURRENT.role!=='member') ? 'block':'none';
+  document.getElementById('bmiHeight').value = CURRENT.height; document.getElementById('bmiWeight').value = CURRENT.weight;
+  document.getElementById('calHeight').value = CURRENT.height; document.getElementById('calWeight').value = CURRENT.weight;
+  document.getElementById('calAge').value = CURRENT.age; document.getElementById('calGender').value = CURRENT.gender==='female'?'female':'male';
+  renderAll();
+}
+
+/* ===================== NAVIGATION ===================== */
+const PAGE_TITLES = {
+  home:['Dashboard Home',"Welcome back — here's today at a glance."],
+  attendance:['Attendance', 'Mark your day, build your streak.'],
+  workout:["Today's Workout", 'A new routine every day.'],
+  diet:['Diet Plan', 'Nutrition that changes daily.'],
+  steps:['Step Tracker', 'Automatic motion-based step counting.'],
+  water:['Water Intake', 'Stay hydrated, stay strong.'],
+  bmi:['BMI Calculator', 'Know your body mass index.'],
+  calories:['Calories Calculator', 'Estimate your daily energy needs.'],
+  progress:['Progress Charts', 'Trends across your fitness journey.'],
+  trainer:['Trainer Panel', 'Manage your members.'],
+  admin:['Admin Dashboard', 'Gym-wide insights and controls.'],
+};
+function goPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active', el.dataset.page===p));
+  document.querySelectorAll('.bottom-nav button').forEach(el=>el.classList.toggle('active', el.dataset.page===p));
+  document.getElementById('pageTitle').textContent = PAGE_TITLES[p][0];
+  document.getElementById('pageSub').textContent = PAGE_TITLES[p][1];
+  closeSidebar();
+  if(p==='progress') renderProgressCharts();
+  if(p==='trainer') renderTrainerPanel();
+  if(p==='admin') renderAdminPanel();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function openSidebar(){ document.getElementById('sidebar').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+function closeSidebar(){ document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+/* ===================== THEME ===================== */
+function toggleTheme(){
+  document.body.classList.toggle('light');
+  const isLight = document.body.classList.contains('light');
+  save(DB_KEYS.THEME, isLight?'light':'dark');
+  document.getElementById('themeBtn').textContent = isLight ? '☀️' : '🌙';
+  refreshAllCharts();
+}
+(function initTheme(){ if(load(DB_KEYS.THEME,'dark')==='light'){ document.body.classList.add('light'); } })();
+
+/* ===================== TOAST / NOTIFICATIONS ===================== */
+function toast(msg, icon){
+  const host = document.getElementById('toastHost');
+  const t = document.createElement('div'); t.className='toast'; t.innerHTML = `${icon||'✅'} ${msg}`;
+  host.appendChild(t); setTimeout(()=>t.remove(), 3500);
+}
+function toggleNotif(){
+  const panel = document.getElementById('notifPanel');
+  if(!panel.classList.contains('hidden')){ panel.classList.add('hidden'); return; }
+  const notes = buildNotifications();
+  panel.innerHTML = notes.length ? notes.map(n=>`<div class="notif-item"><div>${n.icon}</div><div><b>${n.title}</b>${n.body}</div></div>`).join('') : '<div class="notif-item">🎉 <div><b>All caught up!</b>No new reminders.</div></div>';
+  panel.classList.remove('hidden');
+}
+document.addEventListener('click', (e)=>{
+  const panel = document.getElementById('notifPanel');
+  if(!panel.contains(e.target) && !e.target.closest('.icon-btn')) panel.classList.add('hidden');
+});
+function buildNotifications(){
+  if(!CURRENT) return [];
+  const notes = [];
+  const att = load(DB_KEYS.ATT,{})[CURRENT.id]||[];
+  if(!att.includes(todayStr())) notes.push({icon:'📅', title:'Mark attendance', body:"You haven't checked in today yet."});
+  const water = (load(DB_KEYS.WATER,{})[CURRENT.id]||{})[todayStr()]||0;
+  if(water < WATER_GOAL) notes.push({icon:'💧', title:'Drink up', body:`${WATER_GOAL-water} glasses left to hit today's water goal.`});
+  const steps = (load(DB_KEYS.STEPS,{})[CURRENT.id]||{})[todayStr()]||0;
+  if(steps < STEP_GOAL) notes.push({icon:'👣', title:'Keep moving', body:`${STEP_GOAL-steps} steps to go for today's goal.`});
+  notes.push({icon:'🏋️', title:"Today's workout", body:`${WORKOUTS[todayDOW()].focus} is ready for you.`});
+  return notes;
+}
+function refreshNotifDot(){ document.getElementById('notifDot').style.display = buildNotifications().length>1 ? 'block':'none'; }
+
+/* ===================== ATTENDANCE ===================== */
+function getAtt(uid){ const all = load(DB_KEYS.ATT,{}); return all[uid]||[]; }
+function setAtt(uid, arr){ const all = load(DB_KEYS.ATT,{}); all[uid]=arr; save(DB_KEYS.ATT, all); }
+function markAttendance(uid){
+  uid = uid || CURRENT.id;
+  const arr = getAtt(uid);
+  if(arr.includes(todayStr())){ toast('Already marked present today ✅','ℹ️'); return; }
+  arr.push(todayStr()); setAtt(uid, arr);
+  toast('Attendance marked for today! 💪','✅');
+  renderAttendance(); renderHome(); refreshNotifDot();
+}
+function calcStreak(arr){
+  let streak=0; let d = new Date();
+  while(arr.includes(todayStr(d))){ streak++; d.setDate(d.getDate()-1); }
+  return streak;
+}
+function renderAttendance(){
+  const arr = getAtt(CURRENT.id);
+  document.getElementById('streakNum').textContent = calcStreak(arr);
+  document.getElementById('totalVisits').textContent = arr.length;
+  const now = new Date(); const y = now.getFullYear(), m = now.getMonth();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  let present=0;
+  for(let d=1; d<=now.getDate(); d++){ const ds = todayStr(new Date(y,m,d)); if(arr.includes(ds)) present++; }
+  document.getElementById('monthAttNum').textContent = now.getDate()? Math.round(present/now.getDate()*100)+'%':'0%';
+  document.getElementById('calMonthLabel').textContent = now.toLocaleDateString(undefined,{month:'long', year:'numeric'});
+  document.getElementById('calDow').innerHTML = ['S','M','T','W','T','F','S'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const firstDow = new Date(y,m,1).getDay();
+  let html=''; for(let i=0;i<firstDow;i++) html+='<div></div>';
+  for(let d=1; d<=daysInMonth; d++){
+    const ds = todayStr(new Date(y,m,d));
+    const isPresent = arr.includes(ds);
+    const isFuture = d > now.getDate();
+    const isToday = d===now.getDate();
+    html += `<div class="cal-day ${isPresent?'present':''} ${isFuture?'future':''} ${isToday?'today-mark':''}">${d}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+  document.getElementById('markAttBtn').textContent = arr.includes(todayStr()) ? '✅ Present Today' : '✅ Mark Today Present';
+}
+
+/* ===================== WORKOUT / DIET ===================== */
+function renderWeekPills(targetId){
+  const today = todayDOW();
+  document.getElementById(targetId).innerHTML = DOW.map(d=>`<div class="day-pill ${d===today?'today':''}">${d.slice(0,3)}</div>`).join('');
+}
+function renderWorkout(){
+  const d = todayDOW();
+  document.getElementById('workoutDayName').textContent = d;
+  document.getElementById('homeWorkoutTitle').textContent = '🏋️ '+WORKOUTS[d].focus;
+  renderWeekPills('weekPillsWorkout');
+  const w = WORKOUTS[d];
+  const doneKey = 'ftn_workout_done_'+CURRENT.id+'_'+todayStr();
+  const done = load(doneKey, []);
+  document.getElementById('workoutList').innerHTML = w.items.map((it,i)=>`
+    <div class="ex-item">
+      <div class="ex-ic">${it[0]}</div>
+      <div class="ex-meta"><b>${it[1]}</b><div class="tag">${it[2]}</div></div>
+      <div class="ex-done"><div class="check ${done.includes(i)?'on':''}" onclick="toggleExDone(${i})">${done.includes(i)?'✓':''}</div></div>
+    </div>`).join('');
+  document.getElementById('homeWorkoutPreview').innerHTML = w.items.slice(0,2).map(it=>`<div class="ex-item" style="margin-bottom:8px;"><div class="ex-ic" style="width:40px;height:40px;font-size:1.1rem;">${it[0]}</div><div class="ex-meta"><b style="font-size:.8rem;">${it[1]}</b><div class="tag">${it[2]}</div></div></div>`).join('');
+}
+function toggleExDone(i){
+  const doneKey = 'ftn_workout_done_'+CURRENT.id+'_'+todayStr();
+  let done = load(doneKey, []);
+  done = done.includes(i) ? done.filter(x=>x!==i) : [...done, i];
+  save(doneKey, done);
+  renderWorkout();
+}
+function renderDiet(){
+  const d = todayDOW();
+  document.getElementById('dietDayName').textContent = d;
+  document.getElementById('homeDietTitle').textContent = '🥗 Diet — '+d;
+  renderWeekPills('weekPillsDiet');
+  const diet = DIETS[d];
+  document.getElementById('dietList').innerHTML = diet.meals.map(m=>`
+    <div class="diet-item"><div><div class="meal">${m[0]}</div><div class="desc">${m[1]}</div></div><div class="kcal">${m[2]?m[2]+' kcal':''}</div></div>`).join('');
+  const total = diet.meals.reduce((a,m)=>a+m[2],0);
+  document.getElementById('dietKcalTotal').textContent = total;
+  document.getElementById('dietKcalGoal').textContent = diet.kcal;
+  const pct = Math.min(100, total/diet.kcal*100);
+  setRing('dietRing', pct, 50);
+  document.getElementById('homeDietPreview').innerHTML = diet.meals.slice(0,2).map(m=>`<div class="diet-item" style="margin-bottom:8px;"><div><div class="meal">${m[0]}</div><div class="desc" style="font-size:.78rem;">${m[1]}</div></div><div class="kcal">${m[2]} kcal</div></div>`).join('');
+}
+function setRing(id, pct, r){
+  const el = document.getElementById(id);
+  const circ = 2*Math.PI*r;
+  el.style.strokeDasharray = circ;
+  el.style.strokeDashoffset = circ - (pct/100)*circ;
+}
+
+/* ===================== STEPS ===================== */
+let stepTracking=false, lastStepTime=0, motionHandler=null;
+function getSteps(uid){ const all = load(DB_KEYS.STEPS,{}); return all[uid]||{}; }
+function setSteps(uid, dayMap){ const all = load(DB_KEYS.STEPS,{}); all[uid]=dayMap; save(DB_KEYS.STEPS, all); }
+function addSteps(n, uid){
+  uid = uid||CURRENT.id;
+  const map = getSteps(uid); const ds = todayStr();
+  map[ds] = (map[ds]||0) + n; setSteps(uid, map);
+  renderSteps(); renderHome();
+}
+function toggleStepTracking(){
+  if(stepTracking){ stopStepTracking(); return; }
+  if(typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function'){
+    DeviceMotionEvent.requestPermission().then(state=>{
+      if(state==='granted') startStepTracking(); else toast('Motion permission denied — try Simulate Walk instead.', '⚠️');
+    }).catch(()=>toast('Motion sensors unavailable on this device.','⚠️'));
+  } else if(typeof DeviceMotionEvent !== 'undefined'){
+    startStepTracking();
+  } else {
+    toast('No motion sensor detected — use Simulate Walk.', '⚠️');
+  }
+}
+function startStepTracking(){
+  stepTracking = true;
+  document.getElementById('stepStartBtn').textContent = '⏸️ Stop Tracking';
+  document.getElementById('stepStatus').textContent = 'Tracking live — walk with your phone to count steps automatically.';
+  let lastMag = 0;
+  motionHandler = function(e){
+    const acc = e.accelerationIncludingGravity || e.acceleration;
+    if(!acc) return;
+    const mag = Math.sqrt((acc.x||0)**2 + (acc.y||0)**2 + (acc.z||0)**2);
+    const delta = Math.abs(mag - lastMag); lastMag = mag;
+    const now = Date.now();
+    if(delta > 7 && now - lastStepTime > 320){
+      lastStepTime = now; addSteps(1);
+    }
+  };
+  window.addEventListener('devicemotion', motionHandler);
+}
+function stopStepTracking(){
+  stepTracking = false;
+  if(motionHandler) window.removeEventListener('devicemotion', motionHandler);
+  const btn = document.getElementById('stepStartBtn');
+  if(btn){ btn.textContent = '▶️ Start Auto Tracking'; }
+  const st = document.getElementById('stepStatus');
+  if(st){ st.textContent = 'Tracking is off. Best results on a mobile browser with motion sensors enabled.'; }
+}
+function simulateWalk(){ addSteps(150); toast('150 steps added 🚶','👣'); }
+function renderSteps(){
+  const map = getSteps(CURRENT.id); const today = map[todayStr()]||0;
+  document.getElementById('stepsToday').textContent = today;
+  document.getElementById('stepsGoalLabel').textContent = STEP_GOAL;
+  setRing('stepsRing', Math.min(100, today/STEP_GOAL*100), 64);
+  drawBarChart('stepsWeekChart', last7Labels(), last7Values(map), '#22d3ee');
+}
+function last7Labels(){ const arr=[]; for(let i=6;i>=0;i--) arr.push(fmtShort(dateMinus(i))); return arr; }
+function last7Values(map){ const arr=[]; for(let i=6;i>=0;i--) arr.push(map[todayStr(dateMinus(i))]||0); return arr; }
+function last14Labels(){ const arr=[]; for(let i=13;i>=0;i--) arr.push(fmtShort(dateMinus(i))); return arr; }
+function last14Values(map){ const arr=[]; for(let i=13;i>=0;i--) arr.push(map[todayStr(dateMinus(i))]||0); return arr; }
+
+/* ===================== WATER ===================== */
+function getWater(uid){ const all = load(DB_KEYS.WATER,{}); return all[uid]||{}; }
+function setWater(uid, dayMap){ const all = load(DB_KEYS.WATER,{}); all[uid]=dayMap; save(DB_KEYS.WATER, all); }
+function addWater(){
+  const map = getWater(CURRENT.id); const ds = todayStr();
+  map[ds] = Math.min(WATER_GOAL+4, (map[ds]||0)+1); setWater(CURRENT.id, map);
+  toast('Glass added — stay hydrated! 💧','💧');
+  renderWater(); renderHome(); refreshNotifDot();
+}
+function resetWater(){ const map = getWater(CURRENT.id); map[todayStr()]=0; setWater(CURRENT.id, map); renderWater(); renderHome(); }
+function renderWater(){
+  const map = getWater(CURRENT.id); const today = map[todayStr()]||0;
+  document.getElementById('waterCount').textContent = today;
+  let glasses=''; for(let i=0;i<WATER_GOAL;i++) glasses += `<div class="glass ${i<today?'filled':''}"><div class="fill"></div></div>`;
+  document.getElementById('waterGlasses').innerHTML = glasses;
+  drawBarChart('waterWeekChart', last7Labels(), last7Values(map), '#22d3ee');
+}
+
+/* ===================== BMI ===================== */
+function calcBMI(){
+  const h = +document.getElementById('bmiHeight').value/100, w = +document.getElementById('bmiWeight').value;
+  if(!h||!w){ return; }
+  const bmi = w/(h*h);
+  document.getElementById('bmiResult').textContent = bmi.toFixed(1);
+  let cat, color, pct;
+  if(bmi<18.5){ cat='Underweight'; color='var(--cyan)'; pct = (bmi/18.5)*12.5; }
+  else if(bmi<25){ cat='Normal weight'; color='var(--lime)'; pct = 12.5 + ((bmi-18.5)/6.5)*37.5; }
+  else if(bmi<30){ cat='Overweight'; color='var(--amber)'; pct = 50 + ((bmi-25)/5)*25; }
+  else { cat='Obese'; color='var(--red)'; pct = Math.min(100, 75 + ((bmi-30)/10)*25); }
+  document.getElementById('bmiCategory').textContent = cat;
+  document.getElementById('bmiCategory').style.color = color;
+  document.getElementById('bmiPtr').style.left = pct+'%';
+  document.getElementById('bmiPtr').style.color = color;
+}
+
+/* ===================== CALORIES ===================== */
+function calcCalories(){
+  const age=+document.getElementById('calAge').value, gender=document.getElementById('calGender').value;
+  const h=+document.getElementById('calHeight').value, w=+document.getElementById('calWeight').value;
+  const act=+document.getElementById('calActivity').value;
+  if(!age||!h||!w) return;
+  let bmr = gender==='male' ? (10*w + 6.25*h - 5*age + 5) : (10*w + 6.25*h - 5*age - 161);
+  document.getElementById('bmrResult').textContent = Math.round(bmr)+' kcal';
+  document.getElementById('tdeeResult').textContent = Math.round(bmr*act)+' kcal';
+}
+
+/* ===================== PROGRESS / WEIGHT ===================== */
+function getWeightHist(uid){ const all=load(DB_KEYS.WEIGHT,{}); return all[uid]||[]; }
+function setWeightHist(uid,arr){ const all=load(DB_KEYS.WEIGHT,{}); all[uid]=arr; save(DB_KEYS.WEIGHT, all); }
+function logWeight(){
+  const v = +document.getElementById('newWeightInput').value;
+  if(!v) return;
+  const arr = getWeightHist(CURRENT.id);
+  const existing = arr.find(x=>x.date===todayStr());
+  if(existing) existing.weight=v; else arr.push({date:todayStr(), weight:v});
+  setWeightHist(CURRENT.id, arr);
+  document.getElementById('newWeightInput').value='';
+  toast('Weight logged!','⚖️');
+  renderProgressCharts();
+}
+
+/* ===================== CHARTS (Chart.js) ===================== */
+const chartInstances = {};
+function chartTextColor(){ return getComputedStyle(document.body).getPropertyValue('--text-dim').trim() || '#9aa1b4'; }
+function chartGridColor(){ return getComputedStyle(document.body).getPropertyValue('--panel-border').trim() || 'rgba(255,255,255,0.08)'; }
+function destroyChart(id){ if(chartInstances[id]){ chartInstances[id].destroy(); delete chartInstances[id]; } }
+function drawBarChart(canvasId, labels, data, color){
+  const ctx = document.getElementById(canvasId); if(!ctx || typeof Chart==='undefined') return;
+  destroyChart(canvasId);
+  chartInstances[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{labels, datasets:[{data, backgroundColor:color, borderRadius:6, maxBarThickness:28}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:chartTextColor(), font:{size:10}}, grid:{display:false}}, y:{ticks:{color:chartTextColor(), font:{size:10}}, grid:{color:chartGridColor()}, beginAtZero:true}}}
+  });
+}
+function drawLineChart(canvasId, labels, data, color){
+  const ctx = document.getElementById(canvasId); if(!ctx || typeof Chart==='undefined') return;
+  destroyChart(canvasId);
+  chartInstances[canvasId] = new Chart(ctx, {
+    type:'line',
+    data:{labels, datasets:[{data, borderColor:color, backgroundColor:color+'33', fill:true, tension:.4, pointRadius:3}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:chartTextColor(), font:{size:10}}, grid:{display:false}}, y:{ticks:{color:chartTextColor(), font:{size:10}}, grid:{color:chartGridColor()}}}}
+  });
+}
+function drawPieChart(canvasId, labels, data, colors){
+  const ctx = document.getElementById(canvasId); if(!ctx || typeof Chart==='undefined') return;
+  destroyChart(canvasId);
+  chartInstances[canvasId] = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels, datasets:[{data, backgroundColor:colors, borderWidth:0}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'bottom', labels:{color:chartTextColor(), font:{size:10}}}}}
+  });
+}
+function refreshAllCharts(){
+  renderHome(); renderSteps(); renderWater();
+  if(document.getElementById('page-progress').classList.contains('active')) renderProgressCharts();
+  if(document.getElementById('page-admin').classList.contains('active')) renderAdminPanel();
+}
+
+/* ===================== HOME ===================== */
+function renderHome(){
+  const att = getAtt(CURRENT.id);
+  const steps = getSteps(CURRENT.id); const todaySteps = steps[todayStr()]||0;
+  const water = getWater(CURRENT.id); const todayWater = water[todayStr()]||0;
+  const streak = calcStreak(att);
+  document.getElementById('homeStats').innerHTML = `
+    <div class="card glow"><h4>🔥 Day Streak</h4><div class="stat-num">${streak}</div><div class="trend up">Keep it going</div></div>
+    <div class="card glow"><h4>👣 Steps Today</h4><div class="stat-num">${todaySteps}</div><div class="stat-sub">Goal ${STEP_GOAL}</div></div>
+    <div class="card glow"><h4>💧 Water Today</h4><div class="stat-num">${todayWater}/${WATER_GOAL}</div><div class="stat-sub">glasses</div></div>
+    <div class="card glow"><h4>📅 Total Visits</h4><div class="stat-num">${att.length}</div><div class="stat-sub">all-time</div></div>`;
+  const last7 = last7Labels();
+  const attData = []; for(let i=6;i>=0;i--){ attData.push(att.includes(todayStr(dateMinus(i)))?1:0); }
+  drawBarChart('homeAttChart', last7, attData, '#a3e635');
+  drawBarChart('homeStepsChart', last7, last7Values(steps), '#8b5cf6');
+  renderWorkout(); renderDiet();
+  refreshNotifDot();
+}
+
+function renderProgressCharts(){
+  const wh = getWeightHist(CURRENT.id).slice(-14);
+  drawLineChart('weightChart', wh.map(x=>fmtShort(new Date(x.date))), wh.map(x=>x.weight), '#f472b6');
+  const att = getAtt(CURRENT.id);
+  const labels30=[], data30=[];
+  for(let i=29;i>=0;i--){ labels30.push(fmtShort(dateMinus(i))); data30.push(att.includes(todayStr(dateMinus(i)))?1:0); }
+  drawBarChart('attTrendChart', labels30, data30, '#a3e635');
+  const steps = getSteps(CURRENT.id);
+  drawLineChart('stepsTrendChart', last14Labels(), last14Values(steps), '#22d3ee');
+  const water = getWater(CURRENT.id);
+  drawLineChart('waterTrendChart', last14Labels(), last14Values(water), '#8b5cf6');
+}
+
+/* ===================== TRAINER PANEL ===================== */
+function renderTrainerPanel(){
+  const members = USERS.filter(u=>u.role==='member');
+  document.getElementById('trMemberCount').textContent = members.length;
+  let presentToday=0, stepSum=0;
+  const rows = members.map(m=>{
+    const att = getAtt(m.id); const isPresent = att.includes(todayStr());
+    if(isPresent) presentToday++;
+    const steps = (getSteps(m.id)[todayStr()])||0; stepSum+=steps;
+    const water = (getWater(m.id)[todayStr()])||0;
+    return `<tr><td>${m.name}</td><td>${m.email}</td><td>${steps}</td><td>${water}/${WATER_GOAL}</td>
+      <td>${isPresent?'✅ Present':'❌ Absent'}</td>
+      <td>${isPresent?'':`<button class="btn btn-sm btn-grad" onclick="markAttendance('${m.id}'); renderTrainerPanel();">Mark Present</button>`}</td></tr>`;
+  }).join('');
+  document.getElementById('trPresentToday').textContent = presentToday;
+  document.getElementById('trAvgSteps').textContent = members.length ? Math.round(stepSum/members.length) : 0;
+  document.getElementById('trainerTable').innerHTML = rows || '<tr><td colspan="6" style="color:var(--text-faint);">No members yet.</td></tr>';
+}
+
+/* ===================== ADMIN PANEL ===================== */
+function renderAdminPanel(){
+  const members = USERS.filter(u=>u.role==='member');
+  const trainers = USERS.filter(u=>u.role==='trainer');
+  document.getElementById('adMembers').textContent = members.length;
+  document.getElementById('adTrainers').textContent = trainers.length;
+  let checkins=0;
+  USERS.forEach(u=>{ if(getAtt(u.id).includes(todayStr())) checkins++; });
+  document.getElementById('adCheckins').textContent = checkins;
+  let totalRate=0;
+  USERS.forEach(u=>{ const att=getAtt(u.id); let p=0; for(let i=0;i<30;i++){ if(att.includes(todayStr(dateMinus(i)))) p++; } totalRate += p/30; });
+  document.getElementById('adAvgAtt').textContent = USERS.length ? Math.round(totalRate/USERS.length*100)+'%' : '0%';
+
+  const labels7 = last7Labels();
+  const data7 = []; for(let i=6;i>=0;i--){ let c=0; USERS.forEach(u=>{ if(getAtt(u.id).includes(todayStr(dateMinus(i)))) c++; }); data7.push(c); }
+  drawBarChart('adminAttChart', labels7, data7, '#22d3ee');
+  drawPieChart('adminRolesChart', ['Members','Trainers','Admins'], [members.length, trainers.length, USERS.filter(u=>u.role==='admin').length], ['#22d3ee','#f472b6','#fbbf24']);
+
+  document.getElementById('adminTable').innerHTML = USERS.map(u=>`
+    <tr><td>${u.name}</td><td>${u.email}</td><td><span class="role-tag ${u.role}">${u.role}</span></td><td>${u.joined}</td>
+    <td>
+      ${u.id!==CURRENT.id ? `<select class="input-mini" style="font-size:.72rem; padding:5px 8px;" onchange="changeRole('${u.id}', this.value)">
+        <option value="member" ${u.role==='member'?'selected':''}>member</option>
+        <option value="trainer" ${u.role==='trainer'?'selected':''}>trainer</option>
+        <option value="admin" ${u.role==='admin'?'selected':''}>admin</option>
+      </select>` : '<span style="color:var(--text-faint); font-size:.72rem;">you</span>'}
+    </td></tr>`).join('');
+}
+function changeRole(uid, role){
+  const u = USERS.find(x=>x.id===uid); if(!u) return;
+  u.role = role; save(DB_KEYS.USERS, USERS);
+  toast(`${u.name}'s role updated to ${role}`, '⚙️');
+  renderAdminPanel();
+}
+
+/* ===================== RENDER ALL ===================== */
+function renderAll(){
+  renderHome(); renderAttendance(); renderWorkout(); renderDiet();
+  renderSteps(); renderWater(); calcBMI(); calcCalories();
+  document.getElementById('themeBtn').textContent = document.body.classList.contains('light') ? '☀️' : '🌙';
+  if(CURRENT.role!=='member'){ /* staff can still see their own dashboard */ }
+}
+
+/* ===================== INIT ===================== */
+window.addEventListener('load', ()=>{
+  if(SESSION){ enterApp(); }
+  setInterval(()=>{ if(CURRENT){ renderHome(); } }, 30000); // periodic refresh for live feel
+});
+
+</script>
+</body>
+</html>
